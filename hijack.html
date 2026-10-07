@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SYSTEM HIJACKED</title>
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --dark-bg: #050505;
+            --alert-red: #ff3333;
+            --text-white: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-user-select: none; /* No text selection */
+            -webkit-touch-callout: none; /* No long-press menu */
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--neon-green);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* CRT Scanline Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            animation: scan 10s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100px); }
+        }
+
+        /* Start Overlay (Required for Fullscreen API) */
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #start-btn {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: transparent;
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: pulse 2s infinite;
+        }
+
+        #start-btn:hover {
+            background: var(--neon-green);
+            color: var(--dark-bg);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 255, 65, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+        }
+
+        /* Main UI */
+        #main-ui {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 500px;
+            z-index: 10;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--neon-green);
+            width: 100%;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .status-bar {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 15px;
+            margin: 20px 0;
+            border: 4px solid var(--neon-green);
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+            position: relative;
+            text-align: center;
+        }
+
+        .qr-container img {
+            display: block;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .qr-upi-id {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #000;
+            background: #fff;
+            display: inline-block;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+        }
+
+        .qr-label {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-bg);
+            padding: 0 10px;
+            color: var(--neon-green);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .input-section {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: block;
+            color: var(--text-white);
+        }
+
+        .input-box {
+            display: flex;
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 255, 65, 0.1);
+        }
+
+        .input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--neon-green);
+            padding: 15px;
+            font-size: 18px;
+            font-family: inherit;
+            outline: none;
+            -webkit-user-select: text;
+        }
+
+        .input-box button {
+            background: var(--neon-green);
+            border: none;
+            color: var(--dark-bg);
+            padding: 0 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .terminal-log {
+            margin-top: 20px;
+            font-size: 12px;
+            height: 120px;
+            overflow: hidden;
+            border: 1px solid #333;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            width: 100%;
+        }
+
+        .log-line {
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .log-line::before {
+            content: "> ";
+            color: var(--alert-red);
+        }
+
+        /* Glitch Text */
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 var(--alert-red);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 3s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 var(--neon-green);
+            clip: rect(64px, 450px, 82px, 0);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(20px, 450px, 80px, 0); }
+            20% { clip: rect(30px, 450px, 70px, 0); }
+            40% { clip: rect(50px, 450px, 40px, 0); }
+            60% { clip: rect(10px, 450px, 90px, 0); }
+            80% { clip: rect(40px, 450px, 60px, 0); }
+            100% { clip: rect(30px, 450px, 70px, 0); }
+        }
+
+        /* Success State */
+        .success-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--neon-green);
+            font-size: 18px;
+            border: 1px solid var(--neon-green);
+            padding: 15px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Start Screen -->
+    <div id="start-overlay">
+        <h1 style="margin-bottom: 20px; text-shadow: 0 0 10px var(--neon-green);">SYSTEM ALERT</h1>
+        <button id="start-btn">[ INITIATE OVERRIDE ]</button>
+        <p style="margin-top: 20px; font-size: 12px; color: #666;">Click to engage full-screen mode</p>
+    </div>
+
+    <!-- Main Interface -->
+    <div id="main-ui">
+        <div class="header">
+            <h1 class="glitch" data-text="CONNECTION ESTABLISHED">CONNECTION ESTABLISHED</h1>
+            <div class="status-bar">
+                <span id="clock">00:00:00</span> | <span>ENCRYPTION: ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="qr-container">
+            <div class="qr-label">SCAN TO VERIFY</div>
+            <!-- UPI ID: 9793327406@fam -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%2F9793327406%40fam&color=000000&bgcolor=ffffff" alt="UPI QR Code">
+            <div class="qr-upi-id">9793327406@fam</div>
+        </div>
+
+        <div class="input-section">
+            <label class="input-label">ENTER DEVICE ID / PHONE NUMBER TO UNLOCK</label>
+            <div class="input-box">
+                <input type="text" id="device-input" placeholder="e.g. +919876543210" autocomplete="off">
+                <button id="submit-btn">EXECUTE</button>
+            </div>
+            <div class="success-message" id="success-msg">
+                PAYMENT VERIFIED.<br>
+                SYSTEM RELEASED.<br>
+                <span style="font-size: 12px; color: #aaa;">You can now close this tab.</span>
+            </div>
+        </div>
+
+        <div class="terminal-log" id="terminal-log">
+            <!-- Logs will appear here -->
+        </div>
+    </div>
+
+    <script>
+        const startOverlay = document
